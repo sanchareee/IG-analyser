@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram Profile Analyzer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .loading-spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid #3498db;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+        .post-type-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Previous HTML content remains exactly the same -->
+    <!-- ... -->
+
+    <script>
+        // Previous functions remain the same until we add the missing ones
+
+        function displayDailyPatterns(data) {
+            const recentActivity = document.getElementById('recentActivity');
+            recentActivity.innerHTML = data.recentPosts.map(post => `
+                <div class="flex items-start gap-3 p-3 border-b border-gray-100">
+                    <span class="post-type-badge ${getTypeColorClass(post.type)} mt-1">
+                        ${post.type.charAt(0).toUpperCase() + post.type.slice(1)}
+                    </span>
+                    <div>
+                        <p class="font-medium">${post.content}</p>
+                        <p class="text-xs text-gray-500">${post.time}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getTypeColorClass(type) {
+            const colors = {
+                reel: 'bg-indigo-100 text-indigo-800',
+                photo: 'bg-purple-100 text-purple-800',
+                carousel: 'bg-blue-100 text-blue-800',
+                story: 'bg-green-100 text-green-800'
+            };
+            return colors[type] || 'bg-gray-100 text-gray-800';
+        }
+
+        function renderContentTypeChart(data) {
+            const ctx = document.getElementById('contentTypeChart').getContext('2d');
+            if (contentTypeChart) contentTypeChart.destroy();
+            
+            contentTypeChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Reels', 'Photos', 'Carousels', 'Stories'],
+                    datasets: [{
+                        data: [
+                            data.totals.reels,
+                            data.totals.photos,
+                            data.totals.carousels,
+                            data.totals.stories
+                        ],
+                        backgroundColor: [
+                            'rgba(79, 70, 229, 0.7)',
+                            'rgba(124, 58, 237, 0.7)',
+                            'rgba(59, 130, 246, 0.7)',
+                            'rgba(16, 185, 129, 0.7)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'right' }
+                    }
+                }
+            });
+        }
+
+        function renderMonthlyTrendChart(data) {
+            const ctx = document.getElementById('monthlyTrendChart').getContext('2d');
+            if (monthlyTrendChart) monthlyTrendChart.destroy();
+            
+            monthlyTrendChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.months,
+                    datasets: [
+                        {
+                            label: 'Reels',
+                            data: data.monthlyData.map(m => m.reels),
+                            borderColor: 'rgba(79, 70, 229, 1)',
+                            backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Photos',
+                            data: data.monthlyData.map(m => m.photos),
+                            borderColor: 'rgba(124, 58, 237, 1)',
+                            backgroundColor: 'rgba(124, 58, 237, 0.1)',
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Carousels',
+                            data: data.monthlyData.map(m => m.carousels),
+                            borderColor: 'rgba(59, 130, 246, 1)',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function renderWeeklyTrendChart(data) {
+            const ctx = document.getElementById('weeklyTrendChart').getContext('2d');
+            if (weeklyTrendChart) weeklyTrendChart.destroy();
+            
+            weeklyTrendChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.months,
+                    datasets: [{
+                        label: 'Average Posts/Week',
+                        data: data.monthlyData.map(m => m.weeklyAvg),
+                        backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                        borderColor: 'rgba(16, 185, 129, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function renderDailyPatternChart(data) {
+            const ctx = document.getElementById('dailyPatternChart').getContext('2d');
+            if (dailyPatternChart) dailyPatternChart.destroy();
+            
+            dailyPatternChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.dailyPattern.map(d => d.day),
+                    datasets: [{
+                        label: 'Posts',
+                        data: data.dailyPattern.map(d => d.count),
+                        backgroundColor: 'rgba(124, 58, 237, 0.7)',
+                        borderColor: 'rgba(124, 58, 237, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function renderPostingTimesChart(data) {
+            const ctx = document.getElementById('postingTimesChart').getContext('2d');
+            if (postingTimesChart) postingTimesChart.destroy();
+            
+            postingTimesChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.postingTimes.map(t => 
+                        t.hour <= 12 ? `${t.hour} AM` : `${t.hour-12} PM`
+                    ),
+                    datasets: [{
+                        label: 'Post Activity',
+                        data: data.postingTimes.map(t => t.count),
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function displayRecentActivity(posts) {
+            const container = document.getElementById('recentActivity');
+            container.innerHTML = posts.map(post => `
+                <div class="flex items-start gap-3 p-3 border-b border-gray-100">
+                    <span class="post-type-badge ${getTypeColorClass(post.type)} mt-1">
+                        ${post.type.charAt(0).toUpperCase() + post.type.slice(1)}
+                    </span>
+                    <div>
+                        <p class="font-medium">${post.content}</p>
+                        <p class="text-xs text-gray-500">${post.time}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.classList.remove('hidden');
+            setTimeout(() => {
+                errorDiv.classList.add('hidden');
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
